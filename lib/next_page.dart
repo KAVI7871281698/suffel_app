@@ -15,162 +15,130 @@ class NextPage extends StatefulWidget {
 }
 
 class _NextPageState extends State<NextPage> {
-  late List<String> boxNumbers;
+  late List<List<String>> leftColumns; // 3 columns with 10 numbers each
+  late List<List<String>> originalLeftColumns;
 
   @override
   void initState() {
     super.initState();
-    boxNumbers = _generateBoxNumbers();
+    leftColumns = _generateLeftColumns();
+    originalLeftColumns = List.generate(
+        3, (i) => List<String>.from(leftColumns[i])); // store original
   }
 
-  // 🔹 Function to create the 6 box values row-wise
-  List<String> _generateBoxNumbers() {
-    List<String> boxValues = [];
+  // 🔹 Generate left side 3 columns, each with 10 numbers
+  List<List<String>> _generateLeftColumns() {
+    List<List<String>> cols = [[], [], []];
+    String en = widget.enteredNumbers.padRight(6, '0'); // 6 digits min
+    String rem = widget.remainingNumbers.padRight(6, '0'); // 6 digits min
 
-    String fullString = widget.enteredNumbers + widget.remainingNumbers;
-    if (fullString.length < 10) {
-      fullString = fullString.padRight(10, '0');
-    }
-
-    // Row 1 → 12, 09, 34
-    if (widget.enteredNumbers.length >= 2) {
-      boxValues.add(widget.enteredNumbers.substring(0, 2));
-    } else if (widget.enteredNumbers.isNotEmpty) {
-      boxValues.add("${widget.enteredNumbers[0]}0");
-    } else {
-      boxValues.add("00");
-    }
-
-    if (widget.enteredNumbers.length >= 4) {
-      boxValues.add(widget.enteredNumbers.substring(2, 4));
-    } else if (widget.enteredNumbers.length == 3) {
-      boxValues.add("${widget.enteredNumbers[2]}0");
-    } else {
-      boxValues.add("00");
-    }
-
-    if (widget.remainingNumbers.length >= 2) {
-      boxValues.add(widget.remainingNumbers.substring(0, 2));
-    } else {
-      boxValues.add("00");
-    }
-
-    // Row 2 → 56, 78, repeat 1st box (12)
-    if (widget.remainingNumbers.length >= 4) {
-      boxValues.add(widget.remainingNumbers.substring(2, 4));
-    } else {
-      boxValues.add("00");
-    }
-
-    if (widget.remainingNumbers.length >= 6) {
-      boxValues.add(widget.remainingNumbers.substring(4, 6));
-    } else {
-      boxValues.add("00");
-    }
-
-    // Repeat 1st box
-    boxValues.add(boxValues[0]);
-
-    return boxValues;
-  }
-
-  // 🔹 Generate right side column logic
-  List<String> _generateRightColumn(String top, String bottom) {
-    return [
-      "$top${bottom[0]}",
-      "${bottom[0]}$top",
-      "$top${bottom[1]}",
-      "${bottom[1]}$top",
-      "$bottom${top[0]}",
-      "${top[0]}$bottom",
-      "$bottom${top[1]}",
-      "${top[1]}$bottom",
-      "$top${bottom[0]}",
-      "${bottom[0]}$top",
+    // Define the pattern for each column
+    List<String> col1Pattern = [
+      en.substring(0, 2),
+      en.substring(2, 4),
+      rem.substring(0, 2)
     ];
-  }
+    List<String> col2Pattern = [
+      en.substring(4, 6),
+      rem.substring(2, 4),
+      rem.substring(4, 6)
+    ];
+    List<String> col3Pattern = [
+      en.substring(0, 2),
+      rem.substring(0, 2),
+      en.substring(2, 4)
+    ];
 
-  // 🔹 Generate full right side grid values
-  List<String> _getRightSideValues() {
-    String col1Top = boxNumbers[0];
-    String col1Bottom = boxNumbers[3];
-    String col2Top = boxNumbers[1];
-    String col2Bottom = boxNumbers[4];
-    String col3Top = boxNumbers[2];
-    String col3Bottom = boxNumbers[5];
-
-    List<String> col1 = _generateRightColumn(col1Top, col1Bottom);
-    List<String> col2 = _generateRightColumn(col2Top, col2Bottom);
-    List<String> col3 = _generateRightColumn(col3Top, col3Bottom);
-
-    List<String> rightSideValues = [];
+    // Fill 10 numbers per column
     for (int i = 0; i < 10; i++) {
-      rightSideValues.add(col1[i]);
-      rightSideValues.add(col2[i]);
-      rightSideValues.add(col3[i]);
+      cols[0].add(col1Pattern[i % 3]);
+      cols[1].add(col2Pattern[i % 3]);
+      cols[2].add(col3Pattern[i % 3]);
     }
-    return rightSideValues;
+
+    return cols;
   }
 
-  // 🔹 Shuffle logic
+  // 🔹 Generate right side numbers based on left columns
+  List<List<String>> _generateRightColumns() {
+    List<List<String>> rightCols = [[], [], []];
+
+    for (int col = 0; col < 3; col++) {
+      for (int i = 0; i < 10; i++) {
+        String num = leftColumns[col][i];
+        // Formula: create 3 numbers from 2-digit number: swap digits, double, append '0', etc.
+        String n1 = "${num[0]}${num[1]}";
+        String n2 = "${num[1]}${num[0]}";
+        String n3 = "${num[0]}${num[0]}";
+        rightCols[col].addAll([n1, n2, n3]);
+      }
+    }
+
+    return rightCols;
+  }
+
   void _shuffle() {
     setState(() {
-      boxNumbers = [
-        boxNumbers[1],
-        boxNumbers[2],
-        boxNumbers[3],
-        boxNumbers[4],
-        boxNumbers[0],
-        boxNumbers[1],
-      ];
+      for (var col in leftColumns) {
+        col.shuffle();
+      }
     });
   }
 
-  // 🔹 Shuffle back (reverse shift)
   void _shuffleBack() {
     setState(() {
-      boxNumbers = [
-        boxNumbers[4],
-        boxNumbers[0],
-        boxNumbers[1],
-        boxNumbers[2],
-        boxNumbers[3],
-        boxNumbers[4],
-      ];
+      leftColumns = List.generate(
+          3, (i) => List<String>.from(originalLeftColumns[i]));
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    List<String> rightSideValues = _getRightSideValues();
+    List<List<String>> rightColumns = _generateRightColumns();
+
+    // Flatten left columns for GridView
+    List<String> leftNumbersFlat = [];
+    for (int i = 0; i < 10; i++) {
+      for (int col = 0; col < 3; col++) {
+        leftNumbersFlat.add(leftColumns[col][i]);
+      }
+    }
+
+    // Flatten right columns
+    List<String> rightNumbersFlat = [];
+    for (int i = 0; i < 10; i++) {
+      for (int col = 0; col < 3; col++) {
+        rightNumbersFlat.addAll(rightColumns[col].sublist(i * 3, i * 3 + 3));
+      }
+    }
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
+        elevation: 6,
+        backgroundColor: Colors.deepPurple,
         title: const Text(
-          "Next Page",
+          "Number Shuffle",
           style: TextStyle(
-            color: Colors.black87,
+            color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
         centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.black87),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Column(
         children: [
           Expanded(
             child: Row(
               children: [
-                // LEFT SIDE (3 cols × 2 rows row-wise)
+                // LEFT GRID
                 Expanded(
                   flex: 1,
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: GridView.builder(
-                      physics: const NeverScrollableScrollPhysics(),
+                      physics: const AlwaysScrollableScrollPhysics(),
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 3,
@@ -178,17 +146,18 @@ class _NextPageState extends State<NextPage> {
                         mainAxisSpacing: 8,
                         childAspectRatio: 1.2,
                       ),
-                      itemCount: boxNumbers.length,
+                      itemCount: leftNumbersFlat.length,
                       itemBuilder: (context, index) {
                         return Container(
                           decoration: BoxDecoration(
                             color: Colors.deepPurple.shade100,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: Colors.deepPurple, width: 1.2),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                                color: Colors.deepPurple, width: 1.5),
                           ),
                           child: Center(
                             child: Text(
-                              boxNumbers[index],
+                              leftNumbersFlat[index],
                               style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -202,33 +171,36 @@ class _NextPageState extends State<NextPage> {
                   ),
                 ),
 
-                // RIGHT SIDE (3 cols × 10 rows)
+                // RIGHT GRID
                 Expanded(
                   flex: 1,
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: GridView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 3,
                         crossAxisSpacing: 6,
                         mainAxisSpacing: 6,
+                        childAspectRatio: 1.2,
                       ),
-                      itemCount: rightSideValues.length,
+                      itemCount: rightNumbersFlat.length,
                       itemBuilder: (context, index) {
                         return Container(
                           decoration: BoxDecoration(
-                            color: Colors.blue.shade50,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.blue.shade300, width: 1),
+                            color: Colors.purple.shade50,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                                color: Colors.deepPurple.shade300, width: 1),
                           ),
                           child: Center(
                             child: Text(
-                              rightSideValues[index],
+                              rightNumbersFlat[index],
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.blue,
+                                color: Colors.deepPurple,
                               ),
                             ),
                           ),
@@ -243,31 +215,42 @@ class _NextPageState extends State<NextPage> {
 
           // 🔹 Bottom Buttons
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
-            color: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+            decoration: const BoxDecoration(
+              color: Colors.deepPurple,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(18),
+                topRight: Radius.circular(18),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 8,
+                  offset: Offset(0, -3),
+                ),
+              ],
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                // Back to Home (Red)
                 IconButton(
-                  icon: const Icon(Icons.home, color: Colors.red, size: 32),
+                  icon: const Icon(Icons.home, color: Colors.white, size: 32),
                   onPressed: () {
                     Navigator.popUntil(context, (route) => route.isFirst);
                   },
                 ),
-                // Shuffle Back (Orange)
                 IconButton(
-                  icon: const Icon(Icons.refresh, color: Colors.orange, size: 32),
+                  icon: const Icon(Icons.skip_previous,
+                      color: Colors.orangeAccent, size: 32),
                   onPressed: _shuffleBack,
                 ),
-                // Shuffle (Green with text)
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   icon: const Icon(Icons.loop, color: Colors.white),

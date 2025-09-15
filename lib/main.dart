@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'next_page.dart'; // Import your next page
+import 'next_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Maths App Calculator',
+      title: 'Number Shuffle App',
       theme: ThemeData(
         primarySwatch: Colors.deepPurple,
         fontFamily: 'Roboto',
@@ -32,22 +32,12 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final TextEditingController _inputController = TextEditingController();
-  final TextEditingController _outputController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    _outputController.text = "0123456789"; // Default digits
-    _inputController.addListener(_updateOutput);
-  }
+  final TextEditingController _outputController = TextEditingController(text: "0123456789");
 
   void _updateOutput() {
     String input = _inputController.text;
-
     if (input.isEmpty) {
-      setState(() {
-        _outputController.text = "0123456789";
-      });
+      _outputController.text = "0123456789";
       return;
     }
 
@@ -57,7 +47,7 @@ class _HomePageState extends State<HomePage> {
     if (input.indexOf(lastChar) != input.lastIndexOf(lastChar)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("⚠️ Repeated number not accepted"),
+          content: Text("⚠ Repeated number not accepted"),
           duration: Duration(seconds: 1),
         ),
       );
@@ -75,9 +65,7 @@ class _HomePageState extends State<HomePage> {
       digits = digits.replaceAll(char, '');
     }
 
-    setState(() {
-      _outputController.text = digits;
-    });
+    _outputController.text = digits;
   }
 
   void _handleSubmit() {
@@ -103,10 +91,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _handleCancel() {
-    setState(() {
-      _inputController.clear();
-      _outputController.text = "0123456789";
-    });
+    _inputController.clear();
+    _outputController.text = "0123456789";
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text("Input cleared!"),
@@ -116,54 +102,50 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _inputController.addListener(_updateOutput);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
-
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 1,
-        title: const Text(
-          "Input Page",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-            color: Colors.black,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.deepPurple, Colors.purpleAccent],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
           ),
         ),
-        centerTitle: false, // Align left
+        title: const Text(
+          "Number Shuffle App",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.white),
+        ),
+        centerTitle: true,
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start, // Align start
           children: [
             const SizedBox(height: 20),
-
             Text(
-              "Enter Your Numbers",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.deepPurple.shade700,
-              ),
+              "Enter Numbers",
+              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.deepPurple.shade700),
             ),
-
             const SizedBox(height: 30),
-
-            // Input & Output Card
             Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              elevation: 5,
-              shadowColor: Colors.deepPurple.withOpacity(0.2),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              elevation: 8,
+              shadowColor: Colors.deepPurple.withOpacity(0.4),
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
                   children: [
-                    // Input Box
                     TextField(
                       controller: _inputController,
                       keyboardType: TextInputType.number,
@@ -171,76 +153,47 @@ class _HomePageState extends State<HomePage> {
                         FilteringTextInputFormatter.digitsOnly,
                         LengthLimitingTextInputFormatter(10),
                       ],
+                      style: const TextStyle(fontSize: 20),
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.grey.shade100,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        labelText: "Enter unique numbers",
-                        prefixIcon: const Icon(Icons.numbers),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                        prefixIcon: const Icon(Icons.edit, color: Colors.deepPurple),
                       ),
                     ),
-
-                    const SizedBox(height: 20),
-
-                    // Plus Icon
-                    const Icon(
-                      Icons.add_circle_outline,
-                      color: Colors.green,
-                      size: 50,
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Output Box
+                    const SizedBox(height: 30),
+                    const Icon(Icons.arrow_downward_rounded, color: Colors.green, size: 45),
+                    const SizedBox(height: 30),
                     TextField(
                       controller: _outputController,
                       readOnly: true,
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.grey.shade200,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        labelText: "Available numbers (0–9)",
-                        prefixIcon: const Icon(Icons.calculate_outlined),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                        prefixIcon: const Icon(Icons.calculate_outlined, color: Colors.deepPurple),
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-
-            const SizedBox(height: 40),
-
-            // Buttons Row (only icons)
+            const SizedBox(height: 50),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                // Submit (Green ✔)
-                ElevatedButton(
+                ElevatedButton.icon(
                   onPressed: _handleSubmit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    padding: const EdgeInsets.all(16),
-                    shape: const CircleBorder(),
-                    elevation: 4,
-                  ),
-                  child: const Icon(Icons.check, color: Colors.white, size: 28),
+                  icon: const Icon(Icons.check_circle, size: 28),
+                  label: const Text("Submit", style: TextStyle(fontSize: 18)),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green, padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                 ),
-
-                // Clear (Navy Blue 🔄)
-                ElevatedButton(
+                ElevatedButton.icon(
                   onPressed: _handleCancel,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.indigo.shade900,
-                    padding: const EdgeInsets.all(16),
-                    shape: const CircleBorder(),
-                    elevation: 4,
-                  ),
-                  child:
-                      const Icon(Icons.refresh, color: Colors.white, size: 28),
+                  icon: const Icon(Icons.refresh, size: 28),
+                  label: const Text("Clear", style: TextStyle(fontSize: 18)),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                 ),
               ],
             ),
